@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora y Comparativa de Brókers</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            background-color: #1f2937; /* bg-gray-800 */
+            border: 1px solid #374151; /* border-gray-700 */
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+        .table-header-sortable {
+            cursor: pointer;
+            transition: color 0.2s ease-in-out;
+            user-select: none;
+        }
+        .table-header-sortable:hover {
+            color: #3b82f6; /* blue-500 */
+        }
+        .sort-indicator {
+            display: inline-block;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            margin-left: 5px;
+            vertical-align: middle;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        .table-header-sortable.sort-asc .sort-indicator {
+            border-bottom: 5px solid;
+            opacity: 1;
+        }
+        .table-header-sortable.sort-desc .sort-indicator {
+            border-top: 5px solid;
+            opacity: 1;
+        }
+        /* Tooltip Styles - UPDATED */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            margin-left: 4px;
+        }
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #4b5563; /* gray-600 */
+            color: #e5e7eb; /* gray-200 */
+            font-size: 10px;
+            font-style: normal;
+            font-weight: bold;
+            cursor: help;
+            line-height: 1;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 240px;
+            background-color: #111827; /* gray-900 */
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 20; /* Increased z-index */
+            top: 140%; /* Changed from bottom to top */
+            left: 50%;
+            margin-left: -120px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-weight: 400;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            pointer-events: none;
+            border: 1px solid #4b5563;
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-4xl font-bold text-white">Comparativa y Calculadora de Brókeres</h1>
+            <p class="text-gray-400 mt-2">Analiza, simula y compara los costes para tu estrategia de inversión.</p>
+        </header>
+
+        <!-- Calculadora de Comisiones -->
+        <div class="card mb-8">
+            <h2 class="text-2xl font-bold text-white mb-6">Calculadora de Comisiones</h2>
+            <form id="commission-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
+                <div>
+                    <label for="inversionInicial" class="block mb-2 text-sm font-medium text-gray-300">Inversión Inicial (€)</label>
+                    <input type="number" id="inversionInicial" value="5000" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                </div>
+                <div>
+                    <label for="aportacionMensual" class="block mb-2 text-sm font-medium text-gray-300">Aportación Mensual (€)</label>
+                    <input type="number" id="aportacionMensual" value="500" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                </div>
+                 <div>
+                    <label for="operacionesMes" class="block mb-2 text-sm font-medium text-gray-300">Nº de Operaciones / Mes</label>
+                    <input type="number" id="operacionesMes" value="1" min="1" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                </div>
+                <div>
+                    <label for="anosInversion" class="block mb-2 text-sm font-medium text-gray-300">Horizonte (Años)</label>
+                    <input type="number" id="anosInversion" value="10" min="1" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                </div>
+                <div class="lg:col-span-1">
+                    <button type="submit" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center h-10">Calcular Costes</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabla de Resultados -->
+        <div id="results-container">
+            <div class="overflow-x-auto bg-gray-800 rounded-lg shadow-lg">
+                <table class="w-full text-sm text-left text-gray-300">
+                    <thead class="text-xs text-gray-100 uppercase bg-gray-700">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 table-header-sortable" data-sort-col="0">Bróker / Cuenta<div class="tooltip-container"><span class="info-icon">i</span><span class="tooltip-text">Nombre del bróker y tipo de cuenta analizada.</span></div><span class="sort-indicator"></span></th>
+                            <th scope="col" class="px-6 py-3 table-header-sortable" data-sort-col="1">Coste Simulado Total<div class="tooltip-container"><span class="info-icon">i</span><span class="tooltip-text">Coste total acumulado en comisiones durante el período de inversión simulado. No incluye costes de traspaso.</span></div><span class="sort-indicator"></span></th>
+                            <th scope="col" class="px-6 py-3">Comisión Base EEUU<div class="tooltip-container"><span class="info-icon">i</span><span class="tooltip-text">Comisión estándar que aplica el bróker para una operación de compra/venta de acciones en el mercado de EEUU.</span></div></th>
+                            <th scope="col" class="px-6 py-3">Comisión Fuera de Límite<div class="tooltip-container"><span class="info-icon">i</span><span class="tooltip-text">Condiciones que se aplican al superar ciertos límites, como un número de operaciones gratuitas o un volumen de negociación.</span></div></th>
+                            <th scope="col" class="px-6 py-3">Comisión Cambio Divisa<div class="tooltip-container"><span class="info-icon">i</span><span class="tooltip-text">Coste por convertir tu moneda (EUR) a la del mercado en el que operas (USD) y viceversa.</span></div></th>
+                            <th scope="col" class="px-6 py-3">Comisión Custodia<div class="tooltip-container"><span class="info-icon">i</span><span class="tooltip-text">Coste anual o periódico por el mantenimiento de los valores en tu cartera.</span></div></th>
+                            <th scope="col" class="px-6 py-3">Comisión Traspaso Salida<div class="tooltip-container"><span class="info-icon">i</span><span class="tooltip-text">Coste por transferir tus acciones o ETFs a otra entidad. Es un coste informativo y no se suma al total.</span></div></th>
+                            <th scope="col" class="px-6 py-3">Regulador<div class="tooltip-container"><span class="info-icon">i</span><span class="tooltip-text">Principal organismo que supervisa la actividad del bróker en la región que presta el servicio.</span></div></th>
+                            <th scope="col" class="px-6 py-3">Modelo 720<div class="tooltip-container"><span class="info-icon">i</span><span class="tooltip-text">Indica si, por la ubicación del bróker, es necesario presentar el Modelo 720 de declaración de bienes en el extranjero.</span></div></th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-table-body">
+                       <!-- Las filas se insertarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+             <p class="text-center text-gray-500 mt-4 text-sm">Haz clic en las cabeceras para ordenar los resultados.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- BROKER COMMISSION DATA & STATIC INFO ---
+        const brokers = {
+            xtb: {
+                name: "XTB (Estándar)",
+                comisionBase: "0%",
+                comisionFueraLimite: "0.2% (mín. 10€)",
+                comisionCambioDivisa: "0.5%",
+                comisionCustodia: "0% (<250k€)",
+                comisionTraspaso: "No detallado",
+                regulador: "KDPW (Polonia)",
+                modelo720: "Sí",
+                calculate: (params) => {
+                    const { monto, volumenMensual } = params;
+                    let comisionCompra = 0;
+                    if (volumenMensual > 100000) {
+                        comisionCompra = Math.max(monto * 0.002, 10);
+                    }
+                    const comisionCambioDivisa = monto * 0.005;
+                    return comisionCompra + comisionCambioDivisa;
+                }
+            },
+            degiro: {
+                name: "Degiro (Basic/Trader)",
+                comisionBase: "2.00€ fijos",
+                comisionFueraLimite: "No aplica",
+                comisionCambioDivisa: "0.25% (AutoFX)",
+                comisionCustodia: "2.50€/año/bolsa",
+                comisionTraspaso: "No especificado",
+                regulador: "BaFin (Alemania)",
+                modelo720: "Sí",
+                calculate: (params) => {
+                    const { monto } = params;
+                    return 2.00 + (monto * 0.0025);
+                }
+            },
+            myinvestor: {
+                name: "MyInvestor",
+                comisionBase: "0.12%",
+                comisionFueraLimite: "Mín. 3€, máx. 20€",
+                comisionCambioDivisa: "0.30%",
+                comisionCustodia: "0€",
+                comisionTraspaso: "0€",
+                regulador: "Banco de España",
+                modelo720: "No",
+                calculate: (params) => {
+                    const { monto } = params;
+                    const comisionCompra = Math.min(Math.max(monto * 0.0012, 3), 20);
+                    return comisionCompra + (monto * 0.0030);
+                }
+            },
+            ibkrFixed: {
+                name: "IBKR (Pro Fija)",
+                comisionBase: "0.005$/acción",
+                comisionFueraLimite: "Mín. 1$, máx. 1%",
+                comisionCambioDivisa: "~0.002% (mín. 2$)",
+                comisionCustodia: "0€",
+                comisionTraspaso: "0€",
+                regulador: "CBI (Irlanda)",
+                modelo720: "Sí",
+                calculate: (params) => {
+                    const { monto, precioAccion, tipoCambioEURUSD } = params;
+                    const valorOperacionUSD = monto / tipoCambioEURUSD;
+                    const numeroTitulos = valorOperacionUSD / precioAccion;
+                    let comisionCompraUSD = Math.min(Math.max(numeroTitulos * 0.005, 1), valorOperacionUSD * 0.01);
+                    let comisionCambioDivisaUSD = Math.max(valorOperacionUSD * 0.00002, 2);
+                    return (comisionCompraUSD + comisionCambioDivisaUSD) * tipoCambioEURUSD;
+                }
+            },
+            ibkrTiered: {
+                name: "IBKR (Pro Niveles)",
+                comisionBase: "Desde 0.0035$/acc",
+                comisionFueraLimite: "Mín. 0.35$ + tasas",
+                comisionCambioDivisa: "~0.002% (mín. 2$)",
+                comisionCustodia: "0€",
+                comisionTraspaso: "0€",
+                regulador: "CBI (Irlanda)",
+                modelo720: "Sí",
+                calculate: (params) => {
+                    const { monto, precioAccion, tipoCambioEURUSD } = params;
+                    const valorOperacionUSD = monto / tipoCambioEURUSD;
+                    const numeroTitulos = valorOperacionUSD / precioAccion;
+                    let comisionCompraUSD = Math.max(numeroTitulos * 0.0035, 0.35); // Plus fees not simulated
+                    let comisionCambioDivisaUSD = Math.max(valorOperacionUSD * 0.00002, 2);
+                    return (comisionCompraUSD + comisionCambioDivisaUSD) * tipoCambioEURUSD;
+                }
+            },
+            revolutStandard: {
+                name: "Revolut (Standard)",
+                comisionBase: "1 gratis/mes",
+                comisionFueraLimite: "0.25% (mín. 1€)",
+                comisionCambioDivisa: "Gratis <1k€/mes, luego 1%",
+                comisionCustodia: "0€",
+                comisionTraspaso: "35$/posición",
+                regulador: "Banco de Lituania",
+                modelo720: "Sí",
+                calculate: (params) => {
+                    const { aportacionMensual, operacionesMes } = params;
+                    if (aportacionMensual <= 0 || operacionesMes <= 0) return 0;
+                    const aportacionPorCompra = aportacionMensual / operacionesMes;
+                    let costeDelMes = 0;
+                    let divisaCambiadaEsteMes = 0;
+                    for (let i = 1; i <= operacionesMes; i++) {
+                        let comisionCompra = (i > 1) ? Math.max(aportacionPorCompra * 0.0025, 1) : 0;
+                        let comisionDivisa = 0;
+                        const limiteDivisaRestante = 1000 - divisaCambiadaEsteMes;
+                        if (limiteDivisaRestante > 0) {
+                            const parteConComision = aportacionPorCompra - Math.min(aportacionPorCompra, limiteDivisaRestante);
+                            if (parteConComision > 0) comisionDivisa = parteConComision * 0.01;
+                        } else {
+                            comisionDivisa = aportacionPorCompra * 0.01;
+                        }
+                        divisaCambiadaEsteMes += aportacionPorCompra;
+                        costeDelMes += comisionCompra + comisionDivisa;
+                    }
+                    return costeDelMes;
+                }
+            }
+        };
+
+        // --- DOM & LOGIC ---
+        const form = document.getElementById('commission-form');
+        const tableBody = document.getElementById('results-table-body');
+        
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            calculateAndDisplay();
+        });
+        
+        document.addEventListener('DOMContentLoaded', calculateAndDisplay);
+        document.querySelectorAll('.table-header-sortable').forEach(header => {
+            header.addEventListener('click', () => {
+                const columnIndex = parseInt(header.dataset.sortCol);
+                sortTable(columnIndex);
+            });
+        });
+
+        function calculateAndDisplay() {
+            const inversionInicial = parseFloat(document.getElementById('inversionInicial').value) || 0;
+            const aportacionMensual = parseFloat(document.getElementById('aportacionMensual').value) || 0;
+            const operacionesMes = parseInt(document.getElementById('operacionesMes').value) || 1;
+            const anosInversion = parseInt(document.getElementById('anosInversion').value) || 1;
+            
+            const internalParams = { precioAccion: 150, tipoCambioEURUSD: 1.08 };
+            tableBody.innerHTML = '';
+
+            if (aportacionMensual <= 0 && inversionInicial <= 0) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-yellow-400">Introduce una aportación inicial o mensual.</td></tr>`;
+                return;
+            }
+
+            Object.values(brokers).forEach(broker => {
+                let costeAcumulado = 0;
+                const paramsInicial = { monto: inversionInicial, volumenMensual: inversionInicial, ...internalParams };
+                
+                if (broker.name.includes('Revolut')) {
+                    const costeMensualRecurrente = broker.calculate({ aportacionMensual, operacionesMes });
+                    costeAcumulado = costeMensualRecurrente * 12 * anosInversion;
+                    if (inversionInicial > 0) {
+                        const comisionCompraInicial = 0; // 1st trade is free
+                        const comisionDivisaInicial = (inversionInicial > 1000) ? (inversionInicial - 1000) * 0.01 : 0;
+                        costeAcumulado += comisionCompraInicial + comisionDivisaInicial;
+                    }
+                } else {
+                    if (inversionInicial > 0) {
+                        costeAcumulado += broker.calculate(paramsInicial);
+                    }
+                    if (aportacionMensual > 0 && operacionesMes > 0 && anosInversion > 0) {
+                        const aportacionPorCompra = aportacionMensual / operacionesMes;
+                        const costePorCompra = broker.calculate({ monto: aportacionPorCompra, volumenMensual: aportacionMensual, ...internalParams });
+                        costeAcumulado += costePorCompra * operacionesMes * 12 * anosInversion;
+                    }
+                }
+                
+                if (broker.name.startsWith('Degiro') && (inversionInicial > 0 || aportacionMensual > 0)) {
+                    costeAcumulado += 2.50 * anosInversion;
+                }
+
+                const row = document.createElement('tr');
+                row.className = 'bg-gray-800 border-b border-gray-700 hover:bg-gray-600';
+                row.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-white">${broker.name}</td>
+                    <td class="px-6 py-4 font-bold text-green-400">${costeAcumulado.toFixed(2)}€</td>
+                    <td class="px-6 py-4">${broker.comisionBase}</td>
+                    <td class="px-6 py-4">${broker.comisionFueraLimite}</td>
+                    <td class="px-6 py-4">${broker.comisionCambioDivisa}</td>
+                    <td class="px-6 py-4">${broker.comisionCustodia}</td>
+                    <td class="px-6 py-4">${broker.comisionTraspaso}</td>
+                    <td class="px-6 py-4">${broker.regulador}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 font-semibold leading-tight ${broker.modelo720 === 'Sí' ? 'text-red-700 bg-red-100' : 'text-green-700 bg-green-100'} rounded-full text-xs">${broker.modelo720}</span></td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            sortTable(1, 'asc');
+        }
+
+        let sortDirections = {};
+
+        function sortTable(columnIndex, direction) {
+            const headers = document.querySelectorAll('.table-header-sortable');
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+            
+            const currentDirection = direction || (sortDirections[columnIndex] === 'asc' ? 'desc' : 'asc');
+            sortDirections = { [columnIndex]: currentDirection };
+
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].textContent;
+                const bText = b.cells[columnIndex].textContent;
+                const aVal = parseFloat(aText);
+                const bVal = parseFloat(bText);
+                let comparison = 0;
+                if (!isNaN(aVal) && !isNaN(bVal)) {
+                    comparison = aVal - bVal;
+                } else {
+                    comparison = aText.localeCompare(bText, 'es', { sensitivity: 'base' });
+                }
+                return currentDirection === 'asc' ? comparison : -comparison;
+            });
+
+            headers.forEach((th) => {
+                const i = parseInt(th.dataset.sortCol);
+                th.classList.remove('sort-asc', 'sort-desc');
+                if (i === columnIndex) {
+                    th.classList.add(currentDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+
+            tableBody.innerHTML = '';
+            rows.forEach(row => tableBody.appendChild(row));
+        }
+    </script>
+</body>
+</html>
