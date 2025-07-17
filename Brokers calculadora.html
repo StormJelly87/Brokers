@@ -44,7 +44,6 @@
             border-top: 5px solid;
             opacity: 1;
         }
-        /* Tooltip Styles - UPDATED */
         .tooltip-container {
             position: relative;
             display: inline-block;
@@ -74,8 +73,8 @@
             border-radius: 6px;
             padding: 8px 12px;
             position: absolute;
-            z-index: 20; /* Increased z-index */
-            top: 140%; /* Changed from bottom to top */
+            z-index: 20;
+            top: 140%;
             left: 50%;
             margin-left: -120px;
             opacity: 0;
@@ -90,6 +89,27 @@
             visibility: visible;
             opacity: 1;
         }
+        .remove-btn {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px; /* Smaller button */
+            height: 22px; /* Smaller button */
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            font-size: 14px;
+        }
+        .remove-btn:hover {
+            background-color: #dc2626; /* red-600 */
+        }
+        .year-row {
+            background-color: #1e293b; /* slate-800 */
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200">
@@ -102,26 +122,23 @@
 
         <!-- Calculadora de Comisiones -->
         <div class="card mb-8">
-            <h2 class="text-2xl font-bold text-white mb-6">Calculadora de Comisiones</h2>
-            <form id="commission-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
-                <div>
-                    <label for="inversionInicial" class="block mb-2 text-sm font-medium text-gray-300">Inversión Inicial (€)</label>
-                    <input type="number" id="inversionInicial" value="5000" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+            <h2 class="text-2xl font-bold text-white mb-4">Plan de Inversión</h2>
+            <form id="commission-form">
+                <!-- Labels for the input fields -->
+                <div class="grid grid-cols-4 gap-2 px-2 pb-2 border-b border-gray-600 mb-2 text-sm text-gray-400">
+                    <div class="font-medium">Periodo</div>
+                    <div>Aportación Mensual (€)</div>
+                    <div>Nº Operaciones / Mes</div>
+                    <div></div> <!-- Empty for alignment with remove button -->
                 </div>
-                <div>
-                    <label for="aportacionMensual" class="block mb-2 text-sm font-medium text-gray-300">Aportación Mensual (€)</label>
-                    <input type="number" id="aportacionMensual" value="500" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                <div id="investment-rows-container" class="space-y-2 mb-6">
+                    <!-- Las filas de inversión se añadirán aquí dinámicamente -->
                 </div>
-                 <div>
-                    <label for="operacionesMes" class="block mb-2 text-sm font-medium text-gray-300">Nº de Operaciones / Mes</label>
-                    <input type="number" id="operacionesMes" value="1" min="1" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                </div>
-                <div>
-                    <label for="anosInversion" class="block mb-2 text-sm font-medium text-gray-300">Horizonte (Años)</label>
-                    <input type="number" id="anosInversion" value="10" min="1" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                </div>
-                <div class="lg:col-span-1">
-                    <button type="submit" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center h-10">Calcular Costes</button>
+                <div class="flex flex-wrap gap-4">
+                    <button type="button" id="add-month-btn" class="flex-grow sm:flex-grow-0 text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Añadir Mes</button>
+                    <button type="button" id="add-year-btn" class="flex-grow sm:flex-grow-0 text-white bg-teal-600 hover:bg-teal-700 focus:ring-4 focus:outline-none focus:ring-teal-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Añadir Año</button>
+                    <button type="button" id="repeat-last-row-btn" class="flex-grow sm:flex-grow-0 text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Repetir Última Fila</button>
+                    <button type="submit" class="flex-grow sm:flex-grow-0 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Calcular Costes Totales</button>
                 </div>
             </form>
         </div>
@@ -275,13 +292,72 @@
         // --- DOM & LOGIC ---
         const form = document.getElementById('commission-form');
         const tableBody = document.getElementById('results-table-body');
-        
+        const addMonthBtn = document.getElementById('add-month-btn');
+        const addYearBtn = document.getElementById('add-year-btn');
+        const repeatLastRowBtn = document.getElementById('repeat-last-row-btn');
+        const rowsContainer = document.getElementById('investment-rows-container');
+
+        const createRowElement = (type, aportacionVal, operacionesVal) => {
+            const newRow = document.createElement('div');
+            const isYear = type === 'year';
+            newRow.className = `investment-row grid grid-cols-4 gap-2 items-center p-2 rounded-lg ${isYear ? 'year-row' : 'bg-gray-700'}`;
+            newRow.dataset.type = type;
+
+            newRow.innerHTML = `
+                <div class="font-medium text-white text-sm"></div>
+                <div>
+                    <input type="number" value="${aportacionVal}" class="aportacion-input bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                </div>
+                <div>
+                    <input type="number" value="${operacionesVal}" min="1" class="operaciones-input bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" class="remove-btn" title="Eliminar Fila">&times;</button>
+                </div>
+            `;
+            rowsContainer.appendChild(newRow);
+            newRow.querySelector('.remove-btn').addEventListener('click', () => {
+                newRow.remove();
+                updateRowNumbers();
+            });
+            updateRowNumbers();
+        };
+
+        const updateRowNumbers = () => {
+            let monthCounter = 0;
+            let yearCounter = 0;
+            rowsContainer.querySelectorAll('.investment-row').forEach(row => {
+                const label = row.querySelector('.font-medium');
+                if (row.dataset.type === 'year') {
+                    yearCounter++;
+                    label.textContent = `Año #${yearCounter}`;
+                } else {
+                    monthCounter++;
+                    label.textContent = `Mes #${monthCounter}`;
+                }
+            });
+        };
+
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             calculateAndDisplay();
         });
         
-        document.addEventListener('DOMContentLoaded', calculateAndDisplay);
+        addMonthBtn.addEventListener('click', () => createRowElement('month', 500, 1));
+        addYearBtn.addEventListener('click', () => createRowElement('year', 500, 1));
+
+        repeatLastRowBtn.addEventListener('click', () => {
+            const lastRow = rowsContainer.querySelector('.investment-row:last-child');
+            if (lastRow) {
+                const lastAportacion = lastRow.querySelector('.aportacion-input').value;
+                const lastOperaciones = lastRow.querySelector('.operaciones-input').value;
+                const lastType = lastRow.dataset.type;
+                createRowElement(lastType, lastAportacion, lastOperaciones);
+            } else {
+                createRowElement('month', 500, 1); // Add a default month if none exist
+            }
+        });
+
         document.querySelectorAll('.table-header-sortable').forEach(header => {
             header.addEventListener('click', () => {
                 const columnIndex = parseInt(header.dataset.sortCol);
@@ -290,51 +366,54 @@
         });
 
         function calculateAndDisplay() {
-            const inversionInicial = parseFloat(document.getElementById('inversionInicial').value) || 0;
-            const aportacionMensual = parseFloat(document.getElementById('aportacionMensual').value) || 0;
-            const operacionesMes = parseInt(document.getElementById('operacionesMes').value) || 1;
-            const anosInversion = parseInt(document.getElementById('anosInversion').value) || 1;
-            
             const internalParams = { precioAccion: 150, tipoCambioEURUSD: 1.08 };
-            tableBody.innerHTML = '';
+            const investmentData = [];
+            let totalMonths = 0;
 
-            if (aportacionMensual <= 0 && inversionInicial <= 0) {
-                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-yellow-400">Introduce una aportación inicial o mensual.</td></tr>`;
+            rowsContainer.querySelectorAll('.investment-row').forEach(row => {
+                const aportacion = parseFloat(row.querySelector('.aportacion-input').value) || 0;
+                const operaciones = parseInt(row.querySelector('.operaciones-input').value) || 0;
+                const type = row.dataset.type;
+                investmentData.push({ aportacion, operaciones, type });
+                totalMonths += type === 'year' ? 12 : 1;
+            });
+
+            if (investmentData.length === 0 || investmentData.every(d => d.aportacion <= 0)) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-yellow-400">Añade al menos un periodo con una aportación para calcular.</td></tr>`;
                 return;
             }
 
+            tableBody.innerHTML = '';
+            const totalYears = Math.ceil(totalMonths / 12);
+
             Object.values(brokers).forEach(broker => {
-                let costeAcumulado = 0;
-                const paramsInicial = { monto: inversionInicial, volumenMensual: inversionInicial, ...internalParams };
-                
-                if (broker.name.includes('Revolut')) {
-                    const costeMensualRecurrente = broker.calculate({ aportacionMensual, operacionesMes });
-                    costeAcumulado = costeMensualRecurrente * 12 * anosInversion;
-                    if (inversionInicial > 0) {
-                        const comisionCompraInicial = 0; // 1st trade is free
-                        const comisionDivisaInicial = (inversionInicial > 1000) ? (inversionInicial - 1000) * 0.01 : 0;
-                        costeAcumulado += comisionCompraInicial + comisionDivisaInicial;
-                    }
-                } else {
-                    if (inversionInicial > 0) {
-                        costeAcumulado += broker.calculate(paramsInicial);
-                    }
-                    if (aportacionMensual > 0 && operacionesMes > 0 && anosInversion > 0) {
+                let totalCost = 0;
+                investmentData.forEach(period => {
+                    const { aportacion: aportacionMensual, operaciones: operacionesMes, type } = period;
+                    if (aportacionMensual <= 0 || operacionesMes <= 0) return;
+
+                    let monthlyCost = 0;
+                    if (broker.name.includes('Revolut')) {
+                        monthlyCost = broker.calculate({ aportacionMensual, operacionesMes });
+                    } else {
                         const aportacionPorCompra = aportacionMensual / operacionesMes;
-                        const costePorCompra = broker.calculate({ monto: aportacionPorCompra, volumenMensual: aportacionMensual, ...internalParams });
-                        costeAcumulado += costePorCompra * operacionesMes * 12 * anosInversion;
+                        const params = { monto: aportacionPorCompra, volumenMensual: aportacionMensual, ...internalParams };
+                        const costPerOperation = broker.calculate(params);
+                        monthlyCost = costPerOperation * operacionesMes;
                     }
-                }
-                
-                if (broker.name.startsWith('Degiro') && (inversionInicial > 0 || aportacionMensual > 0)) {
-                    costeAcumulado += 2.50 * anosInversion;
+                    
+                    totalCost += type === 'year' ? monthlyCost * 12 : monthlyCost;
+                });
+
+                if (broker.name.startsWith('Degiro') && investmentData.some(d => d.aportacion > 0)) {
+                    totalCost += 2.50 * totalYears;
                 }
 
                 const row = document.createElement('tr');
                 row.className = 'bg-gray-800 border-b border-gray-700 hover:bg-gray-600';
                 row.innerHTML = `
                     <td class="px-6 py-4 font-medium text-white">${broker.name}</td>
-                    <td class="px-6 py-4 font-bold text-green-400">${costeAcumulado.toFixed(2)}€</td>
+                    <td class="px-6 py-4 font-bold text-green-400">${totalCost.toFixed(2)}€</td>
                     <td class="px-6 py-4">${broker.comisionBase}</td>
                     <td class="px-6 py-4">${broker.comisionFueraLimite}</td>
                     <td class="px-6 py-4">${broker.comisionCambioDivisa}</td>
@@ -355,6 +434,8 @@
             const headers = document.querySelectorAll('.table-header-sortable');
             const rows = Array.from(tableBody.querySelectorAll('tr'));
             
+            if (rows.length === 0 || rows[0].cells.length <= columnIndex) return;
+
             const currentDirection = direction || (sortDirections[columnIndex] === 'asc' ? 'desc' : 'asc');
             sortDirections = { [columnIndex]: currentDirection };
 
@@ -383,6 +464,12 @@
             tableBody.innerHTML = '';
             rows.forEach(row => tableBody.appendChild(row));
         }
+        
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            createRowElement('month', 100, 1); // Start with one month
+            calculateAndDisplay(); // Initial calculation
+        });
     </script>
 </body>
 </html>
