@@ -286,6 +286,133 @@
                     }
                     return costeDelMes;
                 }
+            },
+            revolutPlus: {
+                name: "Revolut (Plus)",
+                comisionBase: "3 gratis/mes + 3.99€/mes",
+                comisionFueraLimite: "0.25% (mín. 1€)",
+                comisionCambioDivisa: "Gratis <3k€/mes, luego 0.5%",
+                comisionCustodia: "0€",
+                comisionTraspaso: "35$/posición",
+                regulador: "Banco de Lituania",
+                modelo720: "Sí",
+                calculate: (params) => {
+                    const { aportacionMensual, operacionesMes } = params;
+                    const costeFijoMensual = 3.99;
+
+                    if (aportacionMensual <= 0 || operacionesMes <= 0) {
+                        return costeFijoMensual;
+                    }
+
+                    const aportacionPorCompra = aportacionMensual / operacionesMes;
+                    let costeVariableDelMes = 0;
+                    let divisaCambiadaEsteMes = 0;
+
+                    for (let i = 1; i <= operacionesMes; i++) {
+                        // Comisión de intermediación
+                        const comisionCompra = (i > 3) ? Math.max(aportacionPorCompra * 0.0025, 1) : 0;
+
+                        // Comisión por cambio de divisa
+                        let comisionDivisa = 0;
+                        const limiteDivisaRestante = 3000 - divisaCambiadaEsteMes;
+                        if (limiteDivisaRestante > 0) {
+                            const parteConComision = aportacionPorCompra - Math.min(aportacionPorCompra, limiteDivisaRestante);
+                            if (parteConComision > 0) comisionDivisa = parteConComision * 0.005;
+                        } else {
+                            comisionDivisa = aportacionPorCompra * 0.005;
+                        }
+                        divisaCambiadaEsteMes += aportacionPorCompra;
+                        costeVariableDelMes += comisionCompra + comisionDivisa;
+                    }
+                    return costeFijoMensual + costeVariableDelMes;
+                }
+            },
+            revolutPremium: {
+                name: "Revolut (Premium)",
+                comisionBase: "5 gratis/mes + 8.99€/mes",
+                comisionFueraLimite: "0.25% (mín. 1€)",
+                comisionCambioDivisa: "Ilimitado sin comisión (días laborables)",
+                comisionCustodia: "0€",
+                comisionTraspaso: "35$/posición",
+                regulador: "Banco de Lituania",
+                modelo720: "Sí",
+                calculate: (params) => {
+                    const { aportacionMensual, operacionesMes } = params;
+                    const costeFijoMensual = 8.99;
+
+                    if (aportacionMensual <= 0 || operacionesMes <= 0) {
+                        return costeFijoMensual;
+                    }
+
+                    const aportacionPorCompra = aportacionMensual / operacionesMes;
+                    let costeVariableDelMes = 0;
+
+                    for (let i = 1; i <= operacionesMes; i++) {
+                        // Comisión de intermediación (solo para operaciones que superan las 5 gratuitas)
+                        const comisionCompra = (i > 5) ? Math.max(aportacionPorCompra * 0.0025, 1) : 0;
+                        costeVariableDelMes += comisionCompra;
+                    }
+                    // No hay comisión de cambio de divisa en días laborables
+                    return costeFijoMensual + costeVariableDelMes;
+                }
+            },
+            revolutMetal: {
+                name: "Revolut (Metal)",
+                comisionBase: "10 gratis/mes + 15.99€/mes",
+                comisionFueraLimite: "0.25% (mín. 1€)",
+                comisionCambioDivisa: "Ilimitado sin comisión (días laborables)",
+                comisionCustodia: "0€",
+                comisionTraspaso: "35$/posición",
+                regulador: "Banco de Lituania",
+                modelo720: "Sí",
+                calculate: (params) => {
+                    const { aportacionMensual, operacionesMes } = params;
+                    const costeFijoMensual = 15.99;
+
+                    if (aportacionMensual <= 0 || operacionesMes <= 0) {
+                        return costeFijoMensual;
+                    }
+
+                    const aportacionPorCompra = aportacionMensual / operacionesMes;
+                    let costeVariableDelMes = 0;
+
+                    for (let i = 1; i <= operacionesMes; i++) {
+                        // Comisión de intermediación (solo para operaciones que superan las 10 gratuitas)
+                        const comisionCompra = (i > 10) ? Math.max(aportacionPorCompra * 0.0025, 1) : 0;
+                        costeVariableDelMes += comisionCompra;
+                    }
+                    // No hay comisión de cambio de divisa en días laborables
+                    return costeFijoMensual + costeVariableDelMes;
+                }
+            },
+            revolutUltra: {
+                name: "Revolut (Ultra)",
+                comisionBase: "10 gratis/mes + 55€/mes",
+                comisionFueraLimite: "0.12% (mín. 1€)",
+                comisionCambioDivisa: "Ilimitado sin comisión (días laborables)",
+                comisionCustodia: "0€",
+                comisionTraspaso: "35$/posición",
+                regulador: "Banco de Lituania",
+                modelo720: "Sí",
+                calculate: (params) => {
+                    const { aportacionMensual, operacionesMes } = params;
+                    const costeFijoMensual = 55;
+
+                    if (aportacionMensual <= 0 || operacionesMes <= 0) {
+                        return costeFijoMensual;
+                    }
+
+                    const aportacionPorCompra = aportacionMensual / operacionesMes;
+                    let costeVariableDelMes = 0;
+
+                    for (let i = 1; i <= operacionesMes; i++) {
+                        // Comisión de intermediación (solo para operaciones que superan las 10 gratuitas)
+                        const comisionCompra = (i > 10) ? Math.max(aportacionPorCompra * 0.0012, 1) : 0;
+                        costeVariableDelMes += comisionCompra;
+                    }
+                    // No hay comisión de cambio de divisa en días laborables
+                    return costeFijoMensual + costeVariableDelMes;
+                }
             }
         };
 
@@ -378,8 +505,8 @@
                 totalMonths += type === 'year' ? 12 : 1;
             });
 
-            if (investmentData.length === 0 || investmentData.every(d => d.aportacion <= 0)) {
-                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-yellow-400">Añade al menos un periodo con una aportación para calcular.</td></tr>`;
+            if (investmentData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-yellow-400">Añade al menos un periodo para calcular.</td></tr>`;
                 return;
             }
 
@@ -390,12 +517,15 @@
                 let totalCost = 0;
                 investmentData.forEach(period => {
                     const { aportacion: aportacionMensual, operaciones: operacionesMes, type } = period;
-                    if (aportacionMensual <= 0 || operacionesMes <= 0) return;
-
+                    
                     let monthlyCost = 0;
+                    // La lógica para los planes de Revolut es diferente, ya que depende de los totales mensuales y tiene niveles de operaciones gratuitas.
+                    // También debe ejecutarse para los planes de suscripción incluso con una inversión de 0.
                     if (broker.name.includes('Revolut')) {
                         monthlyCost = broker.calculate({ aportacionMensual, operacionesMes });
-                    } else {
+                    } 
+                    // Para otros brókeres, calcular solo si hay una inversión.
+                    else if (aportacionMensual > 0 && operacionesMes > 0) {
                         const aportacionPorCompra = aportacionMensual / operacionesMes;
                         const params = { monto: aportacionPorCompra, volumenMensual: aportacionMensual, ...internalParams };
                         const costPerOperation = broker.calculate(params);
