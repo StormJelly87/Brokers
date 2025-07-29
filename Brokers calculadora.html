@@ -172,6 +172,31 @@
     <script>
         // --- BROKER COMMISSION DATA & STATIC INFO ---
         const brokers = {
+            tradeRepublic: {
+                name: "Trade Republic (IBAN ES)",
+                comisionBase: "1€/operación (Planes gratis)",
+                comisionFueraLimite: "No aplica",
+                comisionCambioDivisa: "Implícito en spread (~0.5-2%)",
+                comisionCustodia: "0€",
+                comisionTraspaso: "Gratis (no fracciones)",
+                regulador: "BaFin / BDE / CNMV",
+                modelo720: "No",
+                calculate: (params) => {
+                    const { aportacionMensual, operacionesMes } = params;
+                    if (aportacionMensual <= 0 || operacionesMes <= 0) {
+                        return 0;
+                    }
+                    // Asumimos que una operación al mes corresponde a un plan de inversión gratuito.
+                    const operacionesConCoste = Math.max(0, operacionesMes - 1);
+                    const costeFijo = operacionesConCoste * 1;
+
+                    // El coste del spread se aplica a todo el capital invertido.
+                    // Usamos una estimación conservadora del 1.25% (punto medio del rango 0.5%-2%).
+                    const costeSpread = aportacionMensual * 0.0125;
+
+                    return costeFijo + costeSpread;
+                }
+            },
             xtb: {
                 name: "XTB (Estándar)",
                 comisionBase: "0%",
@@ -519,9 +544,8 @@
                     const { aportacion: aportacionMensual, operaciones: operacionesMes, type } = period;
                     
                     let monthlyCost = 0;
-                    // La lógica para los planes de Revolut es diferente, ya que depende de los totales mensuales y tiene niveles de operaciones gratuitas.
-                    // También debe ejecutarse para los planes de suscripción incluso con una inversión de 0.
-                    if (broker.name.includes('Revolut')) {
+                    // Lógica específica para brókers con planes o cálculos mensuales complejos.
+                    if (broker.name.includes('Revolut') || broker.name.includes('Trade Republic')) {
                         monthlyCost = broker.calculate({ aportacionMensual, operacionesMes });
                     } 
                     // Para otros brókeres, calcular solo si hay una inversión.
